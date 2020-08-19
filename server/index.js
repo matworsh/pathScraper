@@ -1,45 +1,32 @@
-const express = require('express')
-const app = express()
-const port = 3000
+const express = require('express');
+const scrapers = require('./scrapers')
+const app = express();
+const port = 3000;
 
-/* app.get('/', async (req, res) => {
-    const ancestries = [
-        {
-        'Name': 'test name',
-        'Traits': 'test traits',
-        'Description': {
-            'General': 'test general discription',
-            'YouMight': 'test you might',
-            'OthersProbably': 'test others probably',
-            'PhysicalDescription': 'test physical description',
-            'Society': 'test society',
-            'AlignmentReligion': 'test alignment and religion',
-            'Names': 'test names',
-            'SampleNames': 'test sample names'
-        },
-        'HP': 'test hp',
-        'Size': 'test size',
-        'Speed': 'test speed',
-        'Boosts': 'test boosts',
-        'Flaws': 'test flaws',
-        'Languages': 'test languages',
-        'Specials': 'test specials',
-        'URL': 'test url',
-        'LastUpdated': 'test last updated'
-        }
-    ]
+const bodyParser = require("body-parser");
 
-  res.send('ancestries')
-}) */
+app.use(bodyParser.json());
 
-//app.post('/', async (req, res) => {
+app.use(function(req, res, next){
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Content-Type");
+  next();
+});
 
-//})
+app.get('/ancestries', async (req, res) => {
+    //const ancestries = scrapers.scrapeAncestries('https://2e.aonprd.com/Ancestries.aspx');
+// todo: GET from db
+  //res.send(ancestries)
+});
 
-app.get('/', (req, res) => {
-    res.send('Hello World!')
-  })
-  
+app.post('/ancestries', async (req, res) => {
+  //const ancestries =scrapers.scrapeAncestries('https://2e.aonprd.com/Ancestries.aspx') ;
+  console.log(req.body);
+  // todo: scrape
+  // todo: add to db
+  res.send('success');
+});
+
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
-})
+});
