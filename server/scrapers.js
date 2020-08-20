@@ -55,15 +55,16 @@ async function scrapeAncestries(){
         const ancestry = tds[0];
         const ancestryUrl = ancestry.firstChild.attribs['href'];
         const publisher = $(tds[1]).text();
+        const source = $(tds[2]).text();
         if(publisher !== 'Paizo'){
             return;
         }
-        ancestryUrlList.push(ancestryUrl);
+        ancestryUrlList.push({url: ancestryUrl, source:source});
     })
 
     //fill ancestry objects from ancestry pages
-    await helpers.asyncForEach (ancestryUrlList, async function(url, index){
-        let ancestryObj = await scrapeAncestry(url, browser, new classes.Ancestry());
+    await helpers.asyncForEach (ancestryUrlList, async function(obj, index){
+        let ancestryObj = await scrapeAncestry(obj.url, obj.source, browser, new classes.Ancestry());
         ancestries.push(ancestryObj);
     });
   
@@ -73,22 +74,23 @@ async function scrapeAncestries(){
     return ancestries;
 }
 
-async function scrapeAncestry(url, browser, ancestry){
+async function scrapeAncestry(url, source,  browser, ancestry){
     let page = await browser.newPage();
-    await page.goto(urlBegin + url, {
+    await page.goto(url, {
         waitUntil: 'load', 
         timeout: 0
     });
     let $ = await helpers.cheerioPage(page);
     //scrape name
-    ancestry.Name = $('span#ctl00_MainContent_DetailedOutput>h1:nth-child(1)>a:nth-child(2)').text();
+    ancestry.Name = $('article.ancestry > h1').text();
 
     //scrape traits
-    let traits = $('span#ctl00_MainContent_DetailedOutput>span.trait');
+    let traits = $('article.ancestry > div.page-center > div.article-content > div.instructions > div.instructions-text');
     traits.each((index, trait) =>{
         ancestry.Traits.push($(trait).text())
     });
-    
+
+    let mechanicsInfo = $('article.ancestry > div.page-center > div > div.instructions > div.instructions-text');
     //scrape description
     //let generalRange = await page.$$('xpath=//*[@id="ctl00_MainContent_DetailedOutput"] >> text="You Might..." >>');
     //generalRange.filter(helpers.isText);
