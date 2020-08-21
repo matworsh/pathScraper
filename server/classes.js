@@ -28,6 +28,79 @@ class Ancestry {
     }
 }
 
+class Creature {
+    lastScraped = '';
+    constructor(){
+        this.Name = '';
+        this.Level = {
+            Type: '',
+            Level: ''
+        };
+        this.Traits = {
+            Rarity: '',
+            Alignment: '',
+            Size: '',
+            OtherTraits: [],
+        };
+        this.Source = '';
+        this.Perception = {
+            Modifier: '',
+            SpecialSenses: []
+        };
+        this.Languages = [];
+        this.Skills = {
+            Name: '',
+            Modifier : ''
+        };
+        this.AbilityModifiers = {
+            Str: '',
+            Dex: '',
+            Con: '',
+            Int: '',
+            Wis: '',
+            Cha: ''
+        };
+        this.Items = [];
+        this.InteractionAbilities = [];
+        this.AC = [];
+        this.SavingThrows = {
+            Fort: '',
+            Ref: '',
+            Will: ''
+        };
+        this.HP = '';
+        this.Immunities = [];
+        this.Weaknesses = [];
+        this.Resistances = [];
+        this.AutomaticAbilities =[{
+            Name: '',
+            Traits: [],
+            Description: ''
+        }];
+        this.ReactiveAbilities =[{
+            Name: '',
+            Type: '',
+            Traits: [],
+            Description: ''
+        }];
+        this.Speed = {
+            Speeds: [{
+                Type: '',
+                Distance: ''
+            }],
+            SpecialAbilities: []
+        };
+        this.Melee = [];
+        this.Ranged = [];
+        this.Spells = [];
+        this.InnateSpells = [];
+        this.FocusSpells = [];
+        this.Rituals = [];
+        this.ProactiveAbilities= [];
+    }
+}
+
 module.exports ={
-    Ancestry
+    Ancestry,
+    Creature
 }

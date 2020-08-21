@@ -104,6 +104,71 @@ async function scrapeAncestry(url, source,  browser, ancestry){
     return ancestry;
 }
 
+async function scrapeCreatures(){
+    const creatures = []
+    const browser = await chromium.launch();
+    const mainPage = await browser.newPage();
+    await mainPage.goto(urlBegin + '/monster', {
+        waitUntil: 'load', 
+        timeout: 0
+    });
+  
+    const $ = await helpers.cheerioPage(mainPage);
+  
+    const creatureUrlList = [];
+    //get all the creature urls on initial page
+    $('#archive-data-table > tbody > tr').each((index, element) => {
+        if (index === 0) return true;
+        const tds = $(element).find('td');
+        const creature = tds[0];
+        const creatureUrl = creature.firstChild.attribs['href'];
+        const publisher = $(tds[3]).text();
+        //const source = $(tds[4]).text();
+        if(publisher !== 'Paizo'){
+            return;
+        }
+        creatureUrlList.push(creatureUrl);
+    })
+
+    //fill creatire objects from creature pages
+    await helpers.asyncForEach (ancestryUrlList, async function(url, index){
+        let ancestryObj = await scrapeCreature(url, browser, new classes.Creature());
+        ancestries.push(ancestryObj);
+    });
+  
+    browser.close();
+  
+    console.log(ancestries);
+    return ancestries;
+}
+
+async function scrapeCreature(url, browser, creature){
+    let page = await browser.newPage();
+    await page.goto(url, {
+        waitUntil: 'load', 
+        timeout: 0
+    });
+    let $ = await helpers.cheerioPage(page);
+    //scrape name
+    creature.Name = $('article.monster > h1').text();
+
+    creature.Level.Type = $('div.article-content > h4.monster > span.monster-type').text();
+    creature.Level.Level = $('div.article-content > h4.monster > span.monster-level').text();
+    //scrape traits
+    creature.Traits.Rarity = $('article.Monster > div.page-center > div.article-content > p.traits > span[class*="frequency"]');
+    creature.Traits.Alignment = $('article.Monster > div.page-center > div.article-content > p.traits > span.alignment');
+    creature.Traits.Size = $('article.Monster > div.page-center > div.article-content > p.traits > span.size');
+    let otherTraits = $('article.Monster > div.page-center > div.article-content > p.traits > span.trait');
+    otherTraits.each((index, trait) =>{
+        creature.Traits.OtherTraits.push($(trait).text())
+    });
+
+    creature.Source = ''
+
+    //creature.lastScraped = new Date().toJson();
+    return ancestry;
+}
+
 //scrapeAncestries(urlBegin + 'Ancestries.aspx');
 scrapeAncestries();
 module.exports = {
