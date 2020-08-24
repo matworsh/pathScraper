@@ -243,15 +243,22 @@ async function scrapeCreature(urlParams, creature){
         creature.Traits.OtherTraits.push($(trait).text())
     });
 
-    //scrape perception\
+    //scrape perception
     //todo: fix
-    //creature.Perception.Modifier
-    let test = $('section.scrollable > section.details > p > a.roll > input[value="Perception"] ~ input.bonus');
-    let senses = $('section.scrollable > section.details > p > a.roll > input[value="Perception"]').parent().next();
-    senses.find("*").addBack().contents().filter((i,s) => { return (s.type === "text" && $(s).text() !== "; ")}).each((index, sense) => {
-        creature.Perception.SpecialSenses.push($(sense).text());
-    });
 
+    //creature.Perception.Modifier;
+    //todo: fix this
+    let sensesString = $('section.scrollable > section.details > p > a.roll > input[value = "Perception"]').parent().parent().text();
+/*     let testSenses = senses.find("*");
+    let testSenses2 = testSenses.contents();
+    testSenses2.filter((i,s) => { return (s.type === "text" && !$(s).text().includes(';') && !$(s).text().includes('+'))}).each((index, sense) => {
+        creature.Perception.SpecialSenses.push($(sense).text());
+    }); */
+
+    let sensesArray = sensesString.replace(';', ',');
+    //let perceptionMod = sensesArray.split("(?=+)");
+    creature.Perception.Modifier = sensesArray[0];
+    creature.Perception.SpecialSenses.push(...sensesArray[1].split(','));
     //scrape languages
     let languages = $('section.scrollable > section.details > p > strong[text="Languages"]').parent();
     let strLanguages = "";
