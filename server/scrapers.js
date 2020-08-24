@@ -2,9 +2,9 @@ const {chromium} = require('playwright');
 const helpers = require('./helpers');
 const classes = require('./classes');
 const fetch = require('node-fetch');
-const zlib = require('zlib');
+//const zlib = require('zlib');
 const cheerio = require('cheerio');
-const request = require('request-promise');
+//const request = require('request-promise');
 //const urlBegin = 'https://pf2.d20pfsrd.com'
 const urlBegin = 'https://pf2.easytool.es/tree/';
 
@@ -228,72 +228,111 @@ async function scrapeCreature(urlParams, creature){
     let $ = await cheerio.load(await creatureHtml.text());
 
     //scrape name
-    creature.Name = $('header.pt-2 > h1.pt-2').text();
+    creature.Name = $('header.pt-2 > h2.pt-2').text();
 
     //scrape level
-    creature.Level.Type = $('div.article-content > h4.monster > span.monster-type').text();
-    creature.Level.Level = $('div.article-content > h4.monster > span.monster-level').text();
+    creature.Level.Type = $('header.pt-2 > h2.pt-2 > div.pt-2').text();
+    creature.Level.Level = $('header.pt-2 > h2.pt-2 > div.pt-2 ml-2').text();
 
     //scrape traits
-    creature.Traits.Rarity = $('article.monster > div.page-center > div.article-content > p.traits > span[class*="frequency"]').text();
-    creature.Traits.Alignment = $('article.monster > div.page-center > div.article-content > p.traits > span.alignment').text();
-    creature.Traits.Size = $('article.monster > div.page-center > div.article-content > p.traits > span.size').text();
-    let otherTraits = $('article.monster > div.page-center > div.article-content > p.traits > span.trait');
+    creature.Traits.Rarity = $('section.scrollable > section.traits > div.d-inline-flex > h3.rarity').text();
+    creature.Traits.Alignment = $('section.scrollable > section.traits > div.d-inline-flex > h3.alignment').text();
+    creature.Traits.Size = $('section.scrollable > section.traits > div.d-inline-flex > h3.size').text();
+    let otherTraits = $('section.scrollable > section.traits > div.d-inline-flex > h3.size ~ h3:not(.rarity):not(.alignment):not(.size)');
     otherTraits.each((index, trait) =>{
         creature.Traits.OtherTraits.push($(trait).text())
     });
 
-    //scrape perception
-    let senses = $('article.monster > div.page-center > div.article-content > p > b:contains("Senses")').parent();
-    senses.find("*").addBack().contents().filter((i,s) => { return (s.type === "text" && $(s).text() !== "Senses")}).each((index, sense) =>{
-        if(index === 0){
-            creature.Perception.Modifier = $(sense).text();
-            return;
-        }
+    //scrape perception\
+    //todo: fix
+    //creature.Perception.Modifier
+    let test = $('section.scrollable > section.details > p > a.roll > input[value="Perception"] ~ input.bonus');
+    let senses = $('section.scrollable > section.details > p > a.roll > input[value="Perception"]').parent().next();
+    senses.find("*").addBack().contents().filter((i,s) => { return (s.type === "text" && $(s).text() !== "; ")}).each((index, sense) => {
         creature.Perception.SpecialSenses.push($(sense).text());
     });
-    //scrape languages
-    let languages = $('article.monster > div.page-center > div.article-content > p > b:contains("Languages")').parent();
-    languages.find("*").addBack().contents().filter((i,s) => { return (s.type === "text" && $(s).text() !== "Languages")}).each((index, language) =>{
-        creature.Languages.push($(language).text());
-    });
-    //scrape skills
-    let skills = $('article.monster > div.page-center > div.article-content > p > b:contains("Skills")').parent();
 
-    let skillNames = skills.children("a");
-    skillNames.each((i,s) => {
-        creature.Skills.push({Name: $(s.firstChild).text(), Modifier: $(s.next).text()})
-    })
+    //scrape languages
+    let languages = $('section.scrollable > section.details > p > strong[text="Languages"]').parent();
+    let strLanguages = "";
+    languages.find("*").addBack().contents().filter((i,s) => { return (s.type === "text" && $(s).text() !== "Languages")}).each((index, language) =>{
+       strLanguages = strLanguages + $(language).text();
+    });
+    creature.Languages.push(...strLanguages.split(','));
+
+    //scrape skills
+    let skills = $('section.scrollable > section.details > p > strong[text="Languages"]').parent();
+    let strSkills = "";
+    skills.find("*").addBack().contents().filter((i,s) => { return (s.type === "text" && $(s).text() !== "Skills")}).each((index, skill) =>{
+        strSkills = strSkills + $(skill).text();
+    });
+    let arraySkills = strSkills.split(',');
+    arraySkills.each((index, s) => {
+        let skillSplit = s.split("(?=+)");
+        creature.Skills.push({Name: skillSplit[0], Modifier: skillSplit[1]});
+    });
 
     //scrape ability modifiers
-    //need to fix below this
-    let abilities = $('article.monster > div.page-center > div.article-content > p > b:contains("Str")');
-    abilities.contents().filter((i,s) => { return (s.type === "text" && !s.parentNode)}).each((index, ability) =>{
-       switch(index){
-        case 0:
-            creature.AbilityModifiers.Str = $(ability).text();
-            return;
-        case 1:
-            creature.AbilityModifiers.Dex = $(ability).text();
-            return;
-        case 2:
-            creature.AbilityModifiers.Con = $(ability).text();
-            return;
-        case 3:
-            creature.AbilityModifiers.Int = $(ability).text();
-            return;
-        case 4:
-            creature.AbilityModifiers.Wis = $(ability).text();
-            return;
-        case 5: 
-            creature.AbilityModifiers.Cha = $(ability).text();
-            return;
-        default:
-            return;
-       }
+    creature.AbilityModifiers.Str = $('section.scrollable > section.details > p > a > input[value="Str"] ~ input.bonus').attr('value');
+    creature.AbilityModifiers.Dex = $('section.scrollable > section.details > p > a > input[value="Dex"] ~ input.bonus').attr('value');
+    creature.AbilityModifiers.Con = $('section.scrollable > section.details > p > a > input[value="Con"] ~ input.bonus').attr('value');
+    creature.AbilityModifiers.Int = $('section.scrollable > section.details > p > a > input[value="Int"] ~ input.bonus').attr('value');
+    creature.AbilityModifiers.Wis = $('section.scrollable > section.details > p > a > input[value="Wis"] ~ input.bonus').attr('value');
+    creature.AbilityModifiers.Cha = $('section.scrollable > section.details > p > a > input[value="Cha"] ~ input.bonus').attr('value');
+
+    //scrape items
+    let items = $('section.scrollable > section.details > p > strong[text="Items"]').parent();
+    let strItems = "";
+    items.find("*").addBack().contents().filter((i,s) => { return (s.type === "text" && $(s).text() !== "Items")}).each((index, item) => {
+        strItems = strItems + $(item).text();
     });
+    creature.Items.push(...strItems.split(','));
+
+    //scrape ac
+    crature.AC = $('section.scrollable > section.details > p > strong[text="AC"]').next().text();
+
+    //scrape saves
+    creature.SavingThrows.Fort = $('section.scrollable > section.details > p > a > input[value="Fort"] ~ input.bonus').text();
+    creature.SavingThrows.Ref = $('section.scrollable > section.details > p > a > input[value="Ref"] ~ input.bonus').text();
+    creature.SavingThrows.Will = $('section.scrollable > section.details > p > a > input[value="Will"] ~ input.bonus').text();
+
+    //scrape hp
+    creature.HP = $('section.scrollable > section.details > p > strong[text="HP"]').next().text();
+
+    //scrape immunities, weaknessess, resistances
+    let iwr = $('section.scrollable > section.details > p > strong[text="HP"]').nextUntil('section.details');
+    let strImmunities = "";
+    let strWeaknessess = "";
+    let strResistances = "";
+
+    iwr.each((index, element) => {
+        switch($(element).text()){
+            case 'Immunites':
+                strImmunities = element.next.attribs['Value'];
+                break;
+            case 'Weaknessess':
+                strWeaknessess = element.next.attribs['Value'];
+                break;
+            case 'Resistances':
+                strResistances = element.next.attribs['Value'];
+                break;
+            default :
+                break;
+        }
+    });
+    if(strImmunities.split(',').length){
+        creature.Immunities.push(...strImmunities.split(','));
+    }
+    if(strWeaknessess.split(',').length){
+        creature.Immunities.push(...strWeaknessess.split(','));
+    }
+    if(strResistances.split(',').length){
+        creature.Immunities.push(...strWeaknessess.split(','));
+    }
+
+
     //scrape source
-    creature.Source = $('div.secion15 > div:nth-child(2) > a').text();
+    creature.Source = $('footer > div > div.source > a').text();
 
     //creature.lastScraped = new Date().toJson();
     return creature;
