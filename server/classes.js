@@ -81,7 +81,7 @@ class Creature {
             Traits: [],
             Description: ''
         }];
-        this.Speed = {
+        this.Movement = {
             Speeds: [{
                 Type: '',
                 Distance: ''

@@ -5,6 +5,7 @@ const cheerio = require('cheerio');
 
 
 async function scrapeCreatures(){
+    //use info from the website to make a fetch call and grab the html it returns
     const creaturesFetch = await fetch(`${helpers.urlBegin}loadBranches.php`, {
         "headers": {
           "accept": "text/html, */*; q=0.01",
@@ -23,6 +24,7 @@ async function scrapeCreatures(){
         "mode": "cors"
       });
     
+    //get the html text and pass it into cheerio so we can query it with jquery like selections
     const cratureListHtml = await creaturesFetch.text();
     const creatures = [];
     const creatureUrlSettings = [];
@@ -45,11 +47,12 @@ async function scrapeCreatures(){
         creatures.push(creatureObj);
     });
   
-    console.log(creatures);
+    //console.log(creatures);
     return creatures;
 }
 
 async function scrapeCreature(urlParams, creature){
+    // fetch the url passed in that belongs to a specific creature
     const creatureHtml = await fetch(`${helpers.urlBegin}actionInfo3.php`, {
         "headers": {
           "accept": "text/html, */*; q=0.01",
@@ -152,6 +155,28 @@ async function scrapeCreature(urlParams, creature){
             }
     });
 
+    //scrape speed
+    let speedStr = $('section.scrollable > section.details > p > strong:contains("Speed")').filter((i, el) => {return $(el).text() === `Speed` }).parent().text();
+    let fullSpeedArray = speedStr.split(`;`)
+    let specialArray = fullSpeedArray.splice(1, fullSpeedArray.length - 1)
+    let speedArray = fullSpeedArray[0].split(`,`);
+    speedArray.forEach((speed) => {
+        let newSpeed = speed.replace(`feet`, ``);
+        if(newSpeed.includes(`fly`)){
+            creature.Movement.Speeds.push({Type: newSpeed.substring(0, newSpeed.indexOf(`fly`) + 3) , Distance: newSpeed.substring(newSpeed.indexOf(`fly`) + 3, newSpeed.length - 1) })
+        }else if(newSpeed.includes(`climb`)){
+            creature.Movement.Speeds.push({Type: newSpeed.substring(0, newSpeed.indexOf(`climb`) + 5) , Distance: newSpeed.substring(newSpeed.indexOf(`climb`) + 5, newSpeed.length - 1) })
+        }else if(newSpeed.includes(`swim`)){
+            creature.Movement.Speeds.push({Type: newSpeed.substring(0, newSpeed.indexOf(`swim`) + 4) , Distance: newSpeed.substring(newSpeed.indexOf(`swim`) + 4, newSpeed.length - 1) })
+        }else if (newSpeed.includes(`Speed`)){
+            creature.Movement.Speeds.push({Type: newSpeed.substring(0, newSpeed.indexOf(`Speed`) + 5) , Distance: newSpeed.substring(newSpeed.indexOf(`Speed`) + 5, newSpeed.length - 1) })
+        }
+    })
+    //special movement abilities
+    specialArray.forEach((special) => {
+        creature.Movement.SpecialAbilities.push(special);
+    });
+
     //scrape source
     creature.Source = $('footer > div > div.source > a').text();
 
@@ -160,3 +185,7 @@ async function scrapeCreature(urlParams, creature){
 }
 
 scrapeCreatures();
+
+module.exports = {
+    scrapeCreatures
+} 

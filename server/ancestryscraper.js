@@ -4,11 +4,6 @@ const classes = require('./classes');
 const fetch = require('node-fetch');
 const cheerio = require('cheerio');
 
-
-async function scrapeAll(){
-
-}
-
 async function scrapeAncestries(){
     const ancestries = []
     const browser = await chromium.launch();
@@ -79,5 +74,5 @@ async function scrapeAncestry(url, source,  browser, ancestry){
 
 //scrapeAncestries();
 module.exports = {
-    scrapeAll,
+    scrapeAncestries
 } 
