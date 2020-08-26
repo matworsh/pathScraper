@@ -1,4 +1,5 @@
 const cheerio = require('cheerio')
+const urlBegin = 'https://pf2.easytool.es/tree/';
 
 async function cheerioPage(page){
     let content = await page.content();
@@ -13,5 +14,6 @@ async function asyncForEach(array, callback) {
 
 module.exports = {
     cheerioPage,
-    asyncForEach
+    asyncForEach, 
+    urlBegin
 }

@@ -48,10 +48,7 @@ class Creature {
             SpecialSenses: []
         };
         this.Languages = [];
-        this.Skills = {
-            Name: '',
-            Modifier : ''
-        };
+        this.Skills = [];
         this.AbilityModifiers = {
             Str: '',
             Dex: '',
@@ -66,7 +63,8 @@ class Creature {
         this.SavingThrows = {
             Fort: '',
             Ref: '',
-            Will: ''
+            Will: '', 
+            Extra: []
         };
         this.HP = '';
         this.Immunities = [];

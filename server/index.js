@@ -1,5 +1,5 @@
 const express = require('express');
-const scrapers = require('./scrapers')
+const scrapers = require('./ancestryscraper')
 const app = express();
 const port = 3000;
 
